@@ -11,10 +11,10 @@ router.post("/createreview", fetchuser, fetchspace , async (req, res) => {
     try {
         const { review, name, email} = req.body;
 
-        const ifReviewExists = await ReviewModel.findOne({email});
-        if(ifReviewExists){
-            return res.status(400).json({error: "An Email can give a review only once. Delete the existing one to get another."})
-        }
+        // const ifReviewExists = await ReviewModel.findOne({email});
+        // if(ifReviewExists){
+        //     return res.status(400).json({error: "An Email can give a review only once. Delete the existing one to get another."})
+        // }
 
         // console.log('req.space:', req.space);
 
