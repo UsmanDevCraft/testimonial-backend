@@ -18,6 +18,9 @@ const NewSpaceModel = new Schema({
         type: String,
         require: true
     },
+    spaceToken: {
+        type: String
+    }
 
 });
 

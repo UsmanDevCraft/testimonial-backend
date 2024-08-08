@@ -20,6 +20,20 @@ router.post("/createspace", fetchuser, async (req, res) => {
             user: req.user.id
         });
 
+
+        // const dataSpace = {
+        //     space: {
+        //         id: savedSpace._id.toString()
+        //     }
+        // };
+
+        // const spaceToken = jwt.sign(dataSpace, secret_key_space);
+
+        const spaceToken = jwt.sign( {id: space._id.toString()} , secret_key_space )
+
+        space.spaceToken = spaceToken;
+
+
         const savedSpace = await space.save();
 
         // console.log('savedSpace:', savedSpace); // Debug savedSpace
@@ -29,17 +43,11 @@ router.post("/createspace", fetchuser, async (req, res) => {
         //     return res.status(500).json({ error: "Failed to create space." });
         // }
 
-        const dataSpace = {
-            space: {
-                id: savedSpace._id.toString()
-            }
-        };
-
-        const spaceToken = jwt.sign(dataSpace, secret_key_space);
+        
         // console.log({"data for space login": dataSpace, spaceToken})
         // console.log(savedSpace.id)
 
-        res.send({ savedSpace, spaceToken });
+        res.send({ savedSpace });
 
     } catch (error) {
         res.status(400).json({error: error.message})
