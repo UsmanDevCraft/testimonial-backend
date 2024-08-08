@@ -9,7 +9,7 @@ const fetchspace = async (req, res, next) => {
     try {
         const dataSpace = jwt.verify(spaceToken, secret_key_space);
         // console.log('dataSpace:', dataSpace); // Debug dataSpace
-        req.space = dataSpace.space;
+        req.spaceId = dataSpace.id;
         // console.log('req.space:', req.space); // Debug req.space
         next();
     } catch (error) {

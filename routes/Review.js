@@ -23,7 +23,7 @@ router.post("/createreview", fetchuser, fetchspace , async (req, res) => {
             name,
             email,
             user: req.user.id,
-            space: req.space.id
+            space: req.spaceId
         });
 
         const savedReview = await newReview.save();
@@ -40,7 +40,7 @@ router.post("/createreview", fetchuser, fetchspace , async (req, res) => {
 router.get("/getreview", fetchuser, fetchspace , async (req, res) => {
     try {
 
-        let reviewExists = await ReviewModel.find({ space: req.space.id });
+        let reviewExists = await ReviewModel.find({ space: req.spaceId });
         // console.log(req.user.id);
         // console.log(req.space.id);
         res.send(reviewExists);
