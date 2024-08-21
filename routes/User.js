@@ -75,7 +75,7 @@ router.post("/getuser", fetchuser, async (req, res)=>{
     try {
         const id = req.user.id;
         const user = await Usermodel.findById(id).select("-password");
-        res.send(user);
+        res.json({ user });
 
     } catch (error) {
         res.status(400).json({error: error.message})
