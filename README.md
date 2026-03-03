@@ -1,18 +1,77 @@
-# 💫 About Me:
-Testimonials backend developed using NodeJs, ExpressJs and MongoDB.
+# 🌟 Testimonial Management
 
-
-## 🌐 Socials:
-[![Instagram](https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white)](https://instagram.com/usman_awan_00) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://linkedin.com/in/muhammad-usman-awan-a77906280) 
-
-# 💻 Tech Stack:
-![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white) ![NPM](https://img.shields.io/badge/NPM-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white) ![Nodemon](https://img.shields.io/badge/NODEMON-%23323330.svg?style=for-the-badge&logo=nodemon&logoColor=%BBDEAD) ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
-# 📊 GitHub Stats:
-![](https://github-readme-stats.vercel.app/api?username=UsmanDevCraft&theme=dark&hide_border=false&include_all_commits=false&count_private=false)<br/>
-![](https://github-readme-streak-stats.herokuapp.com/?user=UsmanDevCraft&theme=dark&hide_border=false)<br/>
-![](https://github-readme-stats.vercel.app/api/top-langs/?username=UsmanDevCraft&theme=dark&hide_border=false&include_all_commits=false&count_private=false&layout=compact)
+**The seamless way to collect, manage, and display social proof.**
 
 ---
-[![](https://visitcount.itsvg.in/api?id=UsmanDevCraft&icon=0&color=0)](https://visitcount.itsvg.in)
 
-<!-- Proudly created with GPRM ( https://gprm.itsvg.in ) -->
+## 🚀 The Problem & Solution
+
+Collecting feedback manually via emails or DMs is disorganized. **TestiCollect** automates the workflow for creators and business owners:
+
+* **Step 1: Share** – Send your unique profile link to clients.
+* **Step 2: Collect** – Clients submit text/ratings via a clean, hosted form.
+* **Step 3: Curate** – Approve the best testimonials in your private dashboard.
+* **Step 4: Display** – Use the generated **Embed Snippet** to show live social proof on any website.
+
+## ✨ Key Features
+
+* 🆔 **Personalized URLs:** Dedicated public landing pages for every user.
+* 🔐 **Secure Management:** Full CRUD operations for testimonials with authentication.
+* 🎨 **Embeddable Widgets:** Iframe/Script support to inject testimonials into external sites.
+* 📡 **RESTful Architecture:** Clean API design for easy integration with React, Vue, or Next.js.
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+| --- | --- |
+| **Runtime** | NodeJs |
+| **Database** | MongoBD |
+| **Tools** | Postman, Mongoose, Dotenv |
+
+---
+
+## 🏗 Installation & Setup
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/UsmanDevCraft/testimonial-backend.git
+cd testimonial-backend
+
+```
+
+
+2. **Install dependencies:**
+```bash
+npm install
+
+```
+
+
+3. **Environment Configuration:**
+Create a `.env` file in the root directory:
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+
+```
+
+
+4. **Launch the application:**
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm start
+
+```
+
+---
+
+## 👨‍💻 Developed By
+
+**Muhammad Usman Awan**
+*MERN Stack Developer*
