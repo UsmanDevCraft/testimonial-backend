@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "gptclone-backend",
   "version": "1.0.0",
   "description": "This is the backend for gpt clone app.",
