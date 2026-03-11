@@ -73,7 +73,7 @@ router.post("/loginuser", async (req, res) => {
 });
 
 // < ------------------------------- GET DATA OF THE NEW USER ------------------------------- >
-router.post("/getuser", fetchuser, async (req, res) => {
+router.get("/getuser", fetchuser, async (req, res) => {
   try {
     const id = req.user.id;
     const user = await Usermodel.findById(id).select("-password");
