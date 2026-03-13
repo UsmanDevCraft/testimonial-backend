@@ -2,21 +2,21 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import fetchuser from "../middleware/fetchuser.js";
-
+import { validateUser } from "../middleware/validations/validateUser.js";
 import Usermodel from "../models/Usermodel.js";
 
 const router = express.Router();
 const secret_key = process.env.JWT_SECRET;
 
 // < ------------------------------- CREATE A NEW USER ------------------------------- >
-router.post("/createuser", async (req, res) => {
+router.post("/createuser", validateUser, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     let user = await Usermodel.findOne({ email: email });
     if (user) {
       return res
         .status(400)
-        .json({ error: "User already exists, please try another email." });
+        .json({ message: "User already exists, please try another email." });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -35,7 +35,11 @@ router.post("/createuser", async (req, res) => {
       },
     };
     const authToken = await jwt.sign(data, secret_key);
-    res.send({ savedUser, authToken });
+    res.send({
+      data: savedUser,
+      authToken,
+      message: "User created successfully!",
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -44,19 +48,19 @@ router.post("/createuser", async (req, res) => {
 // < ------------------------------- LOGIN THE NEW USER ------------------------------- >
 router.post("/loginuser", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    let user = await Usermodel.findOne({ email: email });
+    const { email, password } = req.body;
+    let user = await Usermodel.findOne({ email: email }).select("+password");
     if (!user) {
       return res
         .status(404)
-        .json({ error: "User doesnot exist, please try again." });
+        .json({ message: "User doesn't exist, please try again." });
     }
 
     const compPass = await bcrypt.compare(password, user.password);
     if (!compPass) {
-      return res
-        .status(400)
-        .json({ error: "Incorrect Credentials, please try again correclty." });
+      return res.status(400).json({
+        message: "Incorrect Credentials, please try again.",
+      });
     }
 
     const data = {
@@ -65,8 +69,7 @@ router.post("/loginuser", async (req, res) => {
       },
     };
     const authToken = await jwt.sign(data, secret_key);
-    // console.log({"data for user login": data})
-    res.send({ authToken });
+    res.send({ data: user, authToken, message: "Login successful!" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
