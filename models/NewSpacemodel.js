@@ -1,25 +1,38 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const NewSpaceModel = new Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usermodel",
+const NewSpaceModel = new Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Usermodel",
+    },
+    spaceName: {
+      type: String,
+      require: true,
+      unique: true,
+    },
+    spaceDesc: {
+      type: String,
+      require: true,
+    },
+    customMessage: {
+      type: String,
+      require: true,
+    },
+    spaceToken: {
+      type: String,
+    },
   },
-  spaceName: {
-    type: String,
-    require: true,
+  {
+    versionKey: false,
   },
-  headerTitle: {
-    type: String,
-    require: true,
-  },
-  customMessage: {
-    type: String,
-    require: true,
-  },
-  spaceToken: {
-    type: String,
+);
+
+NewSpaceModel.set("toJSON", {
+  transform: (doc, ret) => {
+    delete ret.user;
+    return ret;
   },
 });
 
