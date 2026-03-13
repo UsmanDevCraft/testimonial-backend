@@ -68,15 +68,15 @@ router.put("/updatespace/:id", fetchuser, async (req, res) => {
 
     let space = await NewSpaceModel.findById(id);
     if (!space) {
-      return res
-        .status(404)
-        .json({ error: "Space Doesnot not exist, please make a space first." });
+      return res.status(404).json({
+        message: "Space Doesnot not exist, please make a space first.",
+      });
     }
 
     if (space.user.toString() !== req.user.id) {
-      return res
-        .status(401)
-        .json({ error: "Editing Not Allowed, you dont own this space." });
+      return res.status(401).json({
+        message: "You don't have permission to edit this space.",
+      });
     }
 
     space = await NewSpaceModel.findByIdAndUpdate(
@@ -84,7 +84,7 @@ router.put("/updatespace/:id", fetchuser, async (req, res) => {
       { $set: newSpace },
       { new: true },
     );
-    res.send(space);
+    res.send({ data: space, message: "Space Updated Successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -96,19 +96,19 @@ router.delete("/deletespace/:id", fetchuser, async (req, res) => {
     const id = req.params.id;
     let space = await NewSpaceModel.findById(id);
     if (!space) {
-      return res
-        .status(404)
-        .json({ error: "Space Doesnot not exist, please make a space first." });
+      return res.status(404).json({
+        message: "Space Doesn't exist.",
+      });
     }
 
     if (space.user.toString() !== req.user.id) {
       return res
         .status(401)
-        .json({ error: "Editing Not Allowed, you dont own this space." });
+        .json({ message: "You don't have permission to edit this space." });
     }
 
     space = await NewSpaceModel.findByIdAndDelete(id);
-    res.send({ space, message: "Space Deleted Successfully" });
+    res.send({ data: space, message: "Space Deleted Successfully!" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

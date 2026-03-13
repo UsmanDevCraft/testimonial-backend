@@ -20,20 +20,10 @@ const NewSpaceModel = new Schema(
       type: String,
       require: true,
     },
-    spaceToken: {
-      type: String,
-    },
   },
   {
     versionKey: false,
   },
 );
-
-NewSpaceModel.set("toJSON", {
-  transform: (doc, ret) => {
-    delete ret.user;
-    return ret;
-  },
-});
 
 export default mongoose.model("NewSpaceModel", NewSpaceModel);
