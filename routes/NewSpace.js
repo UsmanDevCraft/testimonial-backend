@@ -1,51 +1,39 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import fetchuser from "../middleware/fetchuser.js";
-
 import NewSpaceModel from "../models/NewSpacemodel.js";
 import Usermodel from "../models/Usermodel.js";
-const secret_key_space = process.env.JWT_SECRET_SPACE;
-
 import fetchspace from "../middleware/fetchspace.js";
+import { validateSpace } from "../middleware/validations/validateSpace.js";
 
 const router = express.Router();
 
 // < ------------------------------- CREATE A NEW SPACE ------------------------------- >
-router.post("/createspace", fetchuser, async (req, res) => {
+router.post("/createspace", fetchuser, validateSpace, async (req, res) => {
   try {
-    const { spaceName, headerTitle, customMessage } = req.body;
+    const { spaceName, spaceDesc, customMessage } = req.body;
+
+    const space_exists = await NewSpaceModel.findOne({
+      spaceName,
+      user: req.user.id,
+    });
+
+    if (space_exists) {
+      return res.status(400).json({
+        message:
+          "Space with this name already exists. Please use a different name.",
+      });
+    }
+
     let space = new NewSpaceModel({
       spaceName,
-      headerTitle,
+      spaceDesc,
       customMessage,
       user: req.user.id,
     });
 
-    // const dataSpace = {
-    //     space: {
-    //         id: savedSpace._id.toString()
-    //     }
-    // };
-
-    // const spaceToken = jwt.sign(dataSpace, secret_key_space);
-
-    const spaceToken = jwt.sign({ id: space._id.toString() }, secret_key_space);
-
-    space.spaceToken = spaceToken;
-
     const savedSpace = await space.save();
 
-    // console.log('savedSpace:', savedSpace); // Debug savedSpace
-    // console.log('savedSpace.id:', savedSpace.id); // Debug savedSpace.id
-
-    // if (!savedSpace || !savedSpace.id) {
-    //     return res.status(500).json({ error: "Failed to create space." });
-    // }
-
-    // console.log({"data for space login": dataSpace, spaceToken})
-    // console.log(savedSpace.id)
-
-    res.send({ savedSpace });
+    res.send({ data: savedSpace, message: "Space created successfully!" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -56,19 +44,7 @@ router.get("/getspace", fetchuser, async (req, res) => {
   try {
     let space = await NewSpaceModel.find({ user: req.user.id });
 
-    // const dataSpace = {
-    //     space: {
-    //         id: space.id
-    //     }
-    // };
-    // const spaceToken = jwt.sign(dataSpace, secret_key_space)
-
-    // console.log({"data for space login using get": dataSpace})
-
-    res.send({ space });
-    // res.json( space );
-
-    // res.send(space)
+    res.send({ data: space });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -77,14 +53,14 @@ router.get("/getspace", fetchuser, async (req, res) => {
 // < ------------------------------- UPDATE AN EXISTING SPACE ------------------------------- >
 router.put("/updatespace/:id", fetchuser, async (req, res) => {
   try {
-    const { spaceName, headerTitle, customMessage } = req.body;
+    const { spaceName, spaceDesc, customMessage } = req.body;
     const id = req.params.id;
     const newSpace = {};
     if (spaceName) {
       newSpace.spaceName = spaceName;
     }
-    if (headerTitle) {
-      newSpace.headerTitle = headerTitle;
+    if (spaceDesc) {
+      newSpace.spaceDesc = spaceDesc;
     }
     if (customMessage) {
       newSpace.customMessage = customMessage;
@@ -92,15 +68,15 @@ router.put("/updatespace/:id", fetchuser, async (req, res) => {
 
     let space = await NewSpaceModel.findById(id);
     if (!space) {
-      return res
-        .status(404)
-        .json({ error: "Space Doesnot not exist, please make a space first." });
+      return res.status(404).json({
+        message: "Space Doesnot not exist, please make a space first.",
+      });
     }
 
     if (space.user.toString() !== req.user.id) {
-      return res
-        .status(401)
-        .json({ error: "Editing Not Allowed, you dont own this space." });
+      return res.status(401).json({
+        message: "You don't have permission to edit this space.",
+      });
     }
 
     space = await NewSpaceModel.findByIdAndUpdate(
@@ -108,7 +84,7 @@ router.put("/updatespace/:id", fetchuser, async (req, res) => {
       { $set: newSpace },
       { new: true },
     );
-    res.send(space);
+    res.send({ data: space, message: "Space Updated Successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -120,19 +96,19 @@ router.delete("/deletespace/:id", fetchuser, async (req, res) => {
     const id = req.params.id;
     let space = await NewSpaceModel.findById(id);
     if (!space) {
-      return res
-        .status(404)
-        .json({ error: "Space Doesnot not exist, please make a space first." });
+      return res.status(404).json({
+        message: "Space Doesn't exist.",
+      });
     }
 
     if (space.user.toString() !== req.user.id) {
       return res
         .status(401)
-        .json({ error: "Editing Not Allowed, you dont own this space." });
+        .json({ message: "You don't have permission to edit this space." });
     }
 
     space = await NewSpaceModel.findByIdAndDelete(id);
-    res.send({ space, message: "Space Deleted Successfully" });
+    res.send({ data: space, message: "Space Deleted Successfully!" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
