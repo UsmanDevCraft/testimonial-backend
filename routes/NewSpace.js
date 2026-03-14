@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import express from "express";
 import fetchuser from "../middleware/fetchuser.js";
 import NewSpaceModel from "../models/NewSpacemodel.js";
@@ -39,7 +40,7 @@ router.post("/createspace", fetchuser, validateSpace, async (req, res) => {
   }
 });
 
-// < ------------------------------- READ THE NEW SPACE ------------------------------- >
+// < ------------------------------- READ ALL SPACES ------------------------------- >
 router.get("/getspace", fetchuser, async (req, res) => {
   try {
     let space = await NewSpaceModel.find({ user: req.user.id });
@@ -47,6 +48,32 @@ router.get("/getspace", fetchuser, async (req, res) => {
     res.send({ data: space });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// < ------------------------------- READ ALL SPACES ------------------------------- >
+router.get("/getSpaceById/:id", fetchuser, async (req, res) => {
+  try {
+    const spaceId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(spaceId)) {
+      return res.status(400).json({ message: "Invalid Space ID format." });
+    }
+
+    const space = await NewSpaceModel.findOne({
+      user: req.user.id,
+      _id: spaceId,
+    });
+
+    if (!space) {
+      return res.status(404).json({
+        message: "Invalid space ID, space not found.",
+      });
+    }
+
+    res.send({ data: space });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
