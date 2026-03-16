@@ -50,9 +50,33 @@ router.post(
 // < ------------------------------- READ ALL SPACES ------------------------------- >
 router.get("/getspace", apiReadLimiter, fetchuser, async (req, res) => {
   try {
-    let space = await NewSpaceModel.find({ user: req.user.id });
+    // 1. Extract and sanitize query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
 
-    res.send({ data: space });
+    // 2. Calculate the number of documents to skip
+    const skip = (page - 1) * limit;
+
+    // 3. Run both queries in parallel for better performance
+    const [spaces, totalCount] = await Promise.all([
+      NewSpaceModel.find({ user: req.user.id })
+        .sort({ createdAt: -1 }) // Recommended: show newest spaces first
+        .skip(skip)
+        .limit(limit),
+      NewSpaceModel.countDocuments({ user: req.user.id }),
+    ]);
+
+    // 4. Return the data along with pagination metadata
+    res.status(200).json({
+      success: true,
+      data: spaces,
+      pagination: {
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        limit: limit,
+      },
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
