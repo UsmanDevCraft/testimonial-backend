@@ -5,43 +5,50 @@ import NewSpaceModel from "../models/NewSpacemodel.js";
 import Usermodel from "../models/Usermodel.js";
 import fetchspace from "../middleware/fetchspace.js";
 import { validateSpace } from "../middleware/validations/validateSpace.js";
+import { apiReadLimiter, apiWriteLimiter } from "../rate_limits/app.js";
 
 const router = express.Router();
 
 // < ------------------------------- CREATE A NEW SPACE ------------------------------- >
-router.post("/createspace", fetchuser, validateSpace, async (req, res) => {
-  try {
-    const { spaceName, spaceDesc, customMessage } = req.body;
+router.post(
+  "/createspace",
+  apiWriteLimiter,
+  fetchuser,
+  validateSpace,
+  async (req, res) => {
+    try {
+      const { spaceName, spaceDesc, customMessage } = req.body;
 
-    const space_exists = await NewSpaceModel.findOne({
-      spaceName,
-      user: req.user.id,
-    });
-
-    if (space_exists) {
-      return res.status(400).json({
-        message:
-          "Space with this name already exists. Please use a different name.",
+      const space_exists = await NewSpaceModel.findOne({
+        spaceName,
+        user: req.user.id,
       });
+
+      if (space_exists) {
+        return res.status(400).json({
+          message:
+            "Space with this name already exists. Please use a different name.",
+        });
+      }
+
+      let space = new NewSpaceModel({
+        spaceName,
+        spaceDesc,
+        customMessage,
+        user: req.user.id,
+      });
+
+      const savedSpace = await space.save();
+
+      res.send({ data: savedSpace, message: "Space created successfully!" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-
-    let space = new NewSpaceModel({
-      spaceName,
-      spaceDesc,
-      customMessage,
-      user: req.user.id,
-    });
-
-    const savedSpace = await space.save();
-
-    res.send({ data: savedSpace, message: "Space created successfully!" });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // < ------------------------------- READ ALL SPACES ------------------------------- >
-router.get("/getspace", fetchuser, async (req, res) => {
+router.get("/getspace", apiReadLimiter, fetchuser, async (req, res) => {
   try {
     let space = await NewSpaceModel.find({ user: req.user.id });
 
@@ -52,7 +59,7 @@ router.get("/getspace", fetchuser, async (req, res) => {
 });
 
 // < ------------------------------- READ ALL SPACES ------------------------------- >
-router.get("/getSpaceById/:id", fetchuser, async (req, res) => {
+router.get("/getSpaceById/:id", apiReadLimiter, fetchuser, async (req, res) => {
   try {
     const spaceId = req.params.id;
 
@@ -78,7 +85,7 @@ router.get("/getSpaceById/:id", fetchuser, async (req, res) => {
 });
 
 // < ------------------------------- UPDATE AN EXISTING SPACE ------------------------------- >
-router.put("/updatespace/:id", fetchuser, async (req, res) => {
+router.put("/updatespace/:id", apiWriteLimiter, fetchuser, async (req, res) => {
   try {
     const { spaceName, spaceDesc, customMessage } = req.body;
     const id = req.params.id;
@@ -118,28 +125,33 @@ router.put("/updatespace/:id", fetchuser, async (req, res) => {
 });
 
 // < ------------------------------- DELETE THE NEW SPACE ------------------------------- >
-router.delete("/deletespace/:id", fetchuser, async (req, res) => {
-  try {
-    const id = req.params.id;
-    let space = await NewSpaceModel.findById(id);
-    if (!space) {
-      return res.status(404).json({
-        message: "Space Doesn't exist.",
-      });
-    }
+router.delete(
+  "/deletespace/:id",
+  apiWriteLimiter,
+  fetchuser,
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+      let space = await NewSpaceModel.findById(id);
+      if (!space) {
+        return res.status(404).json({
+          message: "Space Doesn't exist.",
+        });
+      }
 
-    if (space.user.toString() !== req.user.id) {
-      return res
-        .status(401)
-        .json({ message: "You don't have permission to edit this space." });
-    }
+      if (space.user.toString() !== req.user.id) {
+        return res
+          .status(401)
+          .json({ message: "You don't have permission to edit this space." });
+      }
 
-    space = await NewSpaceModel.findByIdAndDelete(id);
-    res.send({ data: space, message: "Space Deleted Successfully!" });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+      space = await NewSpaceModel.findByIdAndDelete(id);
+      res.send({ data: space, message: "Space Deleted Successfully!" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+);
 
 // < ------------------------ GET REVIEWS OF THE NEW SPACE (SEPERATELY) ------------------------ >
 router.post("/getspacereviews", fetchuser, fetchspace, async (req, res) => {
