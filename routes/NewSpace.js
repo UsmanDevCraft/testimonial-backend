@@ -82,7 +82,7 @@ router.get("/getspace", apiReadLimiter, fetchuser, async (req, res) => {
   }
 });
 
-// < ------------------------------- READ ALL SPACES ------------------------------- >
+// < ------------------------------- READ SPACE BY ID ------------------------------- >
 router.get("/getSpaceById/:id", apiReadLimiter, fetchuser, async (req, res) => {
   try {
     const spaceId = req.params.id;
