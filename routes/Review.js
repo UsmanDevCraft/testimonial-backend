@@ -2,52 +2,55 @@ import express from "express";
 import mongoose from "mongoose";
 import fetchuser from "../middleware/fetchuser.js";
 import ReviewModel from "../models/Reviewmodel.js";
+import Usermodel from "../models/Usermodel.js";
 import NewSpaceModel from "../models/NewSpacemodel.js";
 import { apiReadLimiter, apiWriteLimiter } from "../rate_limits/app.js";
 
 const router = express.Router();
 
 // < ------------------------------- CREATE A NEW REVIEW ------------------------------- >
-router.post(
-  "/create-review/:id",
-  apiWriteLimiter,
-  fetchuser,
-  async (req, res) => {
-    try {
-      const { review, reviewer_name, reviewer_email } = req.body;
+router.post("/create-review/:id", apiWriteLimiter, async (req, res) => {
+  try {
+    const { review, reviewer_name, reviewer_email, spaceId } = req.body;
 
-      const spaceId = req.params.id;
+    const userId = req.params.id;
+    let user = await Usermodel.findOne({ _id: userId });
 
-      if (!mongoose.Types.ObjectId.isValid(spaceId)) {
-        return res.status(400).json({ message: "Invalid Space ID format." });
-      }
-
-      const space = await NewSpaceModel.findOne({
-        user: req.user.id,
-        _id: spaceId,
-      });
-
-      if (!space) {
-        return res.status(404).json({
-          message: "Invalid space ID, space not found.",
-        });
-      }
-
-      let newReview = new ReviewModel({
-        review,
-        reviewer_name,
-        reviewer_email,
-        user: req.user.id,
-        space_id: spaceId,
-      });
-
-      const savedReview = await newReview.save();
-      res.send({ data: savedReview, message: "Review created successfully!" });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User doesn't exist, please try again." });
     }
-  },
-);
+
+    if (!mongoose.Types.ObjectId.isValid(spaceId)) {
+      return res.status(400).json({ message: "Invalid Space ID format." });
+    }
+
+    const space = await NewSpaceModel.findOne({
+      user: userId,
+      _id: spaceId,
+    });
+
+    if (!space) {
+      return res.status(404).json({
+        message: "Invalid space ID, space not found.",
+      });
+    }
+
+    let newReview = new ReviewModel({
+      review,
+      reviewer_name,
+      reviewer_email,
+      user: userId,
+      space_id: spaceId,
+    });
+
+    const savedReview = await newReview.save();
+    res.send({ data: savedReview, message: "Review created successfully!" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // < ------------------------------- READ REVIEW BY ID ------------------------------- >
 router.get("/get-review/:id", apiReadLimiter, fetchuser, async (req, res) => {
