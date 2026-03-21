@@ -1,91 +1,148 @@
 import express from "express";
+import mongoose from "mongoose";
 import fetchuser from "../middleware/fetchuser.js";
 import ReviewModel from "../models/Reviewmodel.js";
-import fetchspace from "../middleware/fetchspace.js";
+import Usermodel from "../models/Usermodel.js";
+import NewSpaceModel from "../models/NewSpacemodel.js";
+import { apiReadLimiter, apiWriteLimiter } from "../rate_limits/app.js";
 
 const router = express.Router();
 
 // < ------------------------------- CREATE A NEW REVIEW ------------------------------- >
-router.post("/createreview", fetchuser, fetchspace, async (req, res) => {
+router.post("/create-review/:id", apiWriteLimiter, async (req, res) => {
   try {
-    const { review, name, email } = req.body;
+    const { review, reviewer_name, reviewer_email, spaceId } = req.body;
 
-    // const ifReviewExists = await ReviewModel.findOne({email});
-    // if(ifReviewExists){
-    //     return res.status(400).json({error: "An Email can give a review only once. Delete the existing one to get another."})
-    // }
+    const userId = req.params.id;
+    let user = await Usermodel.findOne({ _id: userId });
 
-    // console.log('req.space:', req.space);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User doesn't exist, please try again." });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(spaceId)) {
+      return res.status(400).json({ message: "Invalid Space ID format." });
+    }
+
+    const space = await NewSpaceModel.findOne({
+      user: userId,
+      _id: spaceId,
+    });
+
+    if (!space) {
+      return res.status(404).json({
+        message: "Invalid space ID, space not found.",
+      });
+    }
 
     let newReview = new ReviewModel({
       review,
-      name,
-      email,
-      user: req.user.id,
-      space: req.spaceId,
+      reviewer_name,
+      reviewer_email,
+      user: userId,
+      space_id: spaceId,
     });
 
     const savedReview = await newReview.save();
-    // console.log({"req.space.id": req.space.id})
-    res.send(savedReview);
+    res.send({ data: savedReview, message: "Review created successfully!" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// < ------------------------------- READ THE NEW REVIEW ------------------------------- >
-router.get("/getreview", fetchuser, fetchspace, async (req, res) => {
+// < ------------------------------- READ REVIEW BY ID ------------------------------- >
+router.get("/get-review/:id", apiReadLimiter, fetchuser, async (req, res) => {
   try {
-    let reviewExists = await ReviewModel.find({ space: req.spaceId });
-    // console.log(req.user.id);
-    // console.log(req.space.id);
-    res.send(reviewExists);
+    const reviewId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      return res.status(400).json({ message: "Invalid Review ID format." });
+    }
+
+    const review = await ReviewModel.findOne({
+      user: req.user.id,
+      _id: reviewId,
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        message: "Invalid review ID, review not found.",
+      });
+    }
+
+    res.send({ data: review });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
 // < ------------------------------- DELETE THE NEW REVIEW ------------------------------- >
-router.delete("/deletereview/:id", fetchuser, fetchspace, async (req, res) => {
-  try {
-    const id = req.params.id;
-    let delReview = await ReviewModel.findById(id);
-    if (!delReview) {
-      return res
-        .status(404)
-        .json({ error: "Review doesnot exist or already deleted." });
+router.delete(
+  "/delete-review/:id",
+  apiWriteLimiter,
+  fetchuser,
+  async (req, res) => {
+    try {
+      const review_id = req.params.id;
+      let delReview = await ReviewModel.findById(review_id);
+      if (!delReview) {
+        return res
+          .status(404)
+          .json({ error: "Review doesnot exist or already deleted." });
+      }
+
+      if (delReview.user.toString() !== req.user.id) {
+        return res
+          .status(401)
+          .json({ error: "Editing Not Allowed, you dont own this space." });
+      }
+
+      delReview = await ReviewModel.findByIdAndDelete(review_id);
+      res.send({ data: delReview, message: "Review Deleted Successfully." });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    if (delReview.user.toString() !== req.user.id) {
-      return res
-        .status(401)
-        .json({ error: "Editing Not Allowed, you dont own this space." });
+// < ------------------------ GET ALL REVIEWS ------------------------ >
+router.get(
+  "/get-all-reviews/:id",
+  apiReadLimiter,
+  fetchuser,
+  async (req, res) => {
+    try {
+      const spaceId = req.params.id;
+
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 15;
+
+      const skip = (page - 1) * limit;
+
+      const [reviews, totalCount] = await Promise.all([
+        ReviewModel.find({ space_id: spaceId, user: req.user.id })
+          .sort({ createdAt: -1 }) // Recommended: show newest review first
+          .skip(skip)
+          .limit(limit),
+        ReviewModel.countDocuments({ space_id: spaceId, user: req.user.id }),
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: reviews,
+        pagination: {
+          totalItems: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          currentPage: page,
+          limit: limit,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-
-    delReview = await ReviewModel.findByIdAndDelete(id);
-    res.send({ delReview, msg: "Review Deleted Successfully." });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// < ------------------------ GET REVIEWS OF THE NEW SPACE (SEPERATELY) ------------------------ >
-router.get("/getspacereviews", fetchuser, fetchspace, async (req, res) => {
-  try {
-    const spaceId = req.query.spaceId;
-
-    // Fetch reviews associated with the space
-    // const reviews = await ReviewModel.find({ space: spaceId })
-    // res.json(reviews);
-
-    const reviews = await ReviewModel.find({ space: spaceId });
-    // .populate('space')  // Populates the space field with the corresponding NewSpaceModel document
-    // .populate('user');  // Populates the user field with the corresponding Usermodel document
-
-    res.json(reviews);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 export default router;

@@ -4,12 +4,13 @@ import bcrypt from "bcryptjs";
 import fetchuser from "../middleware/fetchuser.js";
 import { validateUser } from "../middleware/validations/validateUser.js";
 import Usermodel from "../models/Usermodel.js";
+import { loginLimiter, signupLimiter } from "../rate_limits/auth.js";
 
 const router = express.Router();
 const secret_key = process.env.JWT_SECRET;
 
 // < ------------------------------- CREATE A NEW USER ------------------------------- >
-router.post("/createuser", validateUser, async (req, res) => {
+router.post("/createuser", signupLimiter, validateUser, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     let user = await Usermodel.findOne({ email: email });
@@ -46,7 +47,7 @@ router.post("/createuser", validateUser, async (req, res) => {
 });
 
 // < ------------------------------- LOGIN THE NEW USER ------------------------------- >
-router.post("/loginuser", async (req, res) => {
+router.post("/loginuser", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     let user = await Usermodel.findOne({ email: email }).select("+password");
