@@ -10,7 +10,6 @@ const NewSpaceModel = new Schema(
     spaceName: {
       type: String,
       require: true,
-      unique: true,
     },
     spaceDesc: {
       type: String,
@@ -29,5 +28,7 @@ const NewSpaceModel = new Schema(
     versionKey: false,
   },
 );
+
+NewSpaceModel.index({ spaceName: 1, user: 1 }, { unique: true });
 
 export default mongoose.model("NewSpaceModel", NewSpaceModel);
